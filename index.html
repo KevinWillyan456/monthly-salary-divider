@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Divisor de Salário Mensal</title>
+    <link rel="stylesheet" href="src/style.css" />
+    <link
+      rel="shortcut icon"
+      href="https://cdn-icons-png.flaticon.com/512/2816/2816951.png"
+      type="image/x-icon"
+    />
+  </head>
+  <body class="bg-gray-100 font-sans text-gray-800">
+    <header class="bg-purple-700 p-4 text-center text-white">
+      <h1 class="text-2xl font-bold">Divisor de Salário Mensal</h1>
+    </header>
+
+    <main class="mx-auto max-w-screen-lg space-y-8 p-4">
+      <section id="descricao" class="rounded-lg bg-white p-4 shadow">
+        <p>
+          Este site ajuda você a dividir seu salário para os gastos do mês e
+          acompanhar o que sobra. Adicione seus gastos e veja como está
+          utilizando seu dinheiro.
+        </p>
+      </section>
+
+      <section id="saldo" class="space-y-4 rounded-lg bg-white p-4 shadow">
+        <h2 class="flex items-center gap-2 text-xl font-semibold">
+          <i data-lucide="dollar-sign"></i>
+          Saldo Disponível
+        </h2>
+        <p>
+          Defina seu saldo inicial e adicione os gastos que você tem. O sistema
+          irá calcular o saldo restante.
+        </p>
+
+        <div class="space-y-2">
+          <p id="saldo-total" class="text-2xl font-bold">R$ 0,00</p>
+
+          <input
+            type="number"
+            id="saldo-inicial"
+            placeholder="Digite o saldo inicial"
+            class="w-full rounded border border-gray-300 p-2"
+          />
+
+          <button
+            id="definir-saldo"
+            class="flex items-center gap-2 rounded bg-purple-700 px-4 py-2 text-white hover:bg-purple-800"
+          >
+            <i data-lucide="check"></i>
+            Definir Saldo
+          </button>
+        </div>
+
+        <div id="alerta-saldo" class="hidden text-red-500">
+          Saldo insuficiente!
+        </div>
+      </section>
+
+      <section id="gastos" class="space-y-4 rounded-lg bg-white p-4 shadow">
+        <h2 class="flex items-center gap-2 text-xl font-semibold">
+          <i data-lucide="clipboard"></i>
+          Gastos
+        </h2>
+
+        <div id="lista-gastos" class="space-y-2"></div>
+
+        <input
+          type="text"
+          id="novo-gasto"
+          placeholder="Descrição do gasto"
+          class="w-full rounded border border-gray-300 p-2"
+        />
+        <input
+          type="number"
+          id="valor-gasto"
+          placeholder="Valor do gasto"
+          class="w-full rounded border border-gray-300 p-2"
+        />
+
+        <button
+          id="adicionar-gasto"
+          class="flex items-center gap-2 rounded bg-green-600 px-4 py-2 text-white hover:bg-green-700"
+        >
+          <i data-lucide="plus"></i>
+          Adicionar Gasto
+        </button>
+      </section>
+
+      <section id="resumo" class="rounded-lg bg-white p-4 shadow">
+        <h2 class="flex items-center gap-2 text-xl font-semibold">
+          <i data-lucide="bar-chart-2"></i>
+          Resumo Financeiro
+        </h2>
+        <div id="resumo-detalhes"></div>
+      </section>
+
+      <button
+        id="resetar-tudo"
+        class="mx-auto flex items-center gap-2 rounded-lg bg-red-600 px-6 py-3 text-white hover:bg-red-700"
+      >
+        <i data-lucide="rotate-ccw"></i>
+        Resetar Tudo
+      </button>
+    </main>
+
+    <footer class="mt-8 bg-gray-200 p-4 text-center text-sm text-gray-600">
+      <p>&copy; <span id="ano-atual"></span> Divisor de Salário Mensal</p>
+    </footer>
+
+    <script src="src/main.ts" type="module"></script>
+  </body>
+</html>
