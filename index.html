@@ -67,18 +67,26 @@
 
         <div id="lista-gastos" class="space-y-2"></div>
 
-        <input
-          type="text"
-          id="novo-gasto"
-          placeholder="Descrição do gasto"
-          class="w-full rounded border border-gray-300 p-2"
-        />
-        <input
-          type="number"
-          id="valor-gasto"
-          placeholder="Valor do gasto"
-          class="w-full rounded border border-gray-300 p-2"
-        />
+        <div class="flex flex-col gap-2 sm:flex-row">
+          <input
+            type="text"
+            id="nome-gasto"
+            placeholder="Nome do gasto"
+            class="flex-1 rounded border border-gray-300 p-2"
+          />
+          <input
+            type="text"
+            id="descricao-gasto"
+            placeholder="Descrição (opcional)"
+            class="flex-1 rounded border border-gray-300 p-2"
+          />
+          <input
+            type="number"
+            id="valor-gasto"
+            placeholder="Valor do gasto"
+            class="flex-1 rounded border border-gray-300 p-2"
+          />
+        </div>
 
         <button
           id="adicionar-gasto"
