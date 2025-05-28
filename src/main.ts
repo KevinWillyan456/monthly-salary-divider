@@ -421,22 +421,31 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Função para renderizar o gráfico de gastos
   const renderizarGraficoGastos = () => {
+    const container = document.getElementById('grafico-gastos-container')
+    const placeholder = document.getElementById('grafico-gastos-placeholder')
+    const secaoGrafico = document.getElementById('grafico-gastos')
+    if (!container || !secaoGrafico) return
+
+    // Limpa o container e placeholder
+    container.innerHTML = ''
+    if (placeholder) placeholder.classList.add('hidden')
+
+    // Esconde a seção se não houver saldo inicial ou não houver gastos
+    if (saldoInicial <= 0 || !gastos.length) {
+      secaoGrafico.style.display = 'none'
+      if (placeholder && saldoInicial <= 0)
+        placeholder.classList.remove('hidden')
+      return
+    } else {
+      secaoGrafico.style.display = ''
+    }
+
     Chart.register(...registerables)
 
-    const graficoContainerId = 'grafico-gastos-container'
-    let container = document.getElementById(graficoContainerId)
-    if (!container) {
-      container = document.createElement('div')
-      container.id = graficoContainerId
-      container.className = 'w-full max-w-md mx-auto my-6'
-      // Insere antes do resumo
-      const resumoSection = document.getElementById('resumo')
-      resumoSection?.parentElement?.insertBefore(container, resumoSection)
-    }
-    // Limpa o container e cria sempre um novo canvas
-    container.innerHTML = ''
     const canvas = document.createElement('canvas')
     canvas.id = 'grafico-gastos-canvas'
+    canvas.style.width = '100%'
+    canvas.style.height = 'auto'
     container.appendChild(canvas)
 
     // Destroi instância anterior se existir
