@@ -63,6 +63,12 @@ section h2 {
   border-radius: 4px;
 }
 
+#lista-gastos {
+  max-height: 580px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
 @media (min-width: 639px) {
   .xs\:hidden {
     display: none !important;

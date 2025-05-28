@@ -1,3 +1,4 @@
+import { Chart, registerables } from 'chart.js'
 import { createIcons, icons } from 'lucide'
 
 createIcons({ icons })
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let saldoInicial: number = parseFloat(
     localStorage.getItem('saldoInicial') || saldo.toString() || '0'
   )
+  let chartInstance: any = null
 
   // Funções utilitárias
   const atualizarSaldo = (): void => {
@@ -57,6 +59,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   const abrirModal = (conteudo: string): HTMLDivElement => {
+    // Fecha qualquer modal já aberto
+    document.querySelectorAll('.modal-unico').forEach((el) => el.remove())
+
     const modal = document.createElement('div')
     modal.classList.add(
       'fixed',
@@ -68,7 +73,8 @@ document.addEventListener('DOMContentLoaded', () => {
       'flex',
       'justify-center',
       'items-center',
-      'z-50'
+      'z-50',
+      'modal-unico'
     )
     modal.innerHTML = `
       <div class="bg-white p-6 rounded-lg shadow-lg w-11/12 max-w-md text-center">
@@ -122,10 +128,61 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('keydown', escListener, { once: true })
   }
 
+  // Adiciona campo de pesquisa acima da lista de gastos
+  let termoPesquisa = ''
+  const criarCampoPesquisa = () => {
+    let campo = document.getElementById(
+      'campo-pesquisa-gasto'
+    ) as HTMLInputElement
+    if (!campo) {
+      campo = document.createElement('input')
+      campo.type = 'text'
+      campo.id = 'campo-pesquisa-gasto'
+      campo.placeholder = 'Pesquisar gastos...'
+      campo.className = 'w-full mb-2 rounded border border-gray-300 p-2'
+      campo.addEventListener('input', () => {
+        termoPesquisa = campo.value.toLowerCase()
+        renderizarGastos()
+      })
+      listaGastosEl.parentElement?.insertBefore(campo, listaGastosEl)
+    }
+  }
+
   // Renderização de gastos
   const renderizarGastos = (): void => {
+    criarCampoPesquisa()
     listaGastosEl.innerHTML = ''
-    gastos.forEach((gasto, index) => {
+
+    // Filtra gastos pelo termo de pesquisa
+    const gastosFiltrados = termoPesquisa
+      ? gastos.filter(
+          (g) =>
+            g.nome.toLowerCase().includes(termoPesquisa) ||
+            (g.descricao && g.descricao.toLowerCase().includes(termoPesquisa))
+        )
+      : gastos
+
+    // Exibe contador de gastos
+    let contador = document.getElementById('contador-gastos')
+    if (!contador) {
+      contador = document.createElement('div')
+      contador.id = 'contador-gastos'
+      contador.className = 'text-sm text-gray-500 mb-2'
+      listaGastosEl.parentElement?.insertBefore(contador, listaGastosEl)
+    }
+    contador.textContent = `Gastos adicionados: ${gastos.length} ${termoPesquisa ? `(exibindo ${gastosFiltrados.length})` : ''}`
+
+    gastosFiltrados.forEach((gasto, index) => {
+      // Corrige o índice real para ações (remover/editar/mover)
+      const realIndex = termoPesquisa
+        ? gastos.findIndex(
+            (g) =>
+              g.nome === gasto.nome &&
+              g.descricao === gasto.descricao &&
+              g.valor === gasto.valor
+          )
+        : index
+
       const gastoEl = document.createElement('div')
       gastoEl.classList.add(
         'flex',
@@ -145,7 +202,7 @@ document.addEventListener('DOMContentLoaded', () => {
       )
 
       // Dropdown para mobile
-      const dropdownId = `dropdown-gasto-${index}`
+      const dropdownId = `dropdown-gasto-${realIndex}`
       gastoEl.innerHTML = `
         <div class="flex flex-col min-w-0 flex-1">
           <span class="font-bold text-gray-900 truncate">${gasto.nome}</span>
@@ -153,26 +210,26 @@ document.addEventListener('DOMContentLoaded', () => {
           <span class="text-green-700 font-bold text-lg mt-1">R$ ${gasto.valor.toFixed(2)}</span>
         </div>
         <div class="hidden xs:flex flex-row flex-wrap gap-1 sm:gap-2">
-          <button class="bg-gray-200 text-gray-700 px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-gray-300 border border-gray-300 disabled:opacity-40" onclick="window.moverGastoCima(${index})" ${index === 0 ? 'disabled' : ''} title="Mover para cima"><i data-lucide="arrow-up"></i></button>
-          <button class="bg-gray-200 text-gray-700 px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-gray-300 border border-gray-300 disabled:opacity-40" onclick="window.moverGastoBaixo(${index})" ${index === gastos.length - 1 ? 'disabled' : ''} title="Mover para baixo"><i data-lucide="arrow-down"></i></button>
-          <button class="bg-blue-500 text-white px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-blue-600 border border-blue-600 flex items-center gap-1" onclick="window.editarGasto(${index})"><i data-lucide="pencil"></i> <span class="hidden sm:inline">Editar</span></button>
-          <button class="bg-red-500 text-white px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-red-600 border border-red-600 flex items-center gap-1" onclick="window.removerGasto(${index})"><i data-lucide="trash-2"></i> <span class="hidden sm:inline">Excluir</span></button>
+          <button class="bg-gray-200 text-gray-700 px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-gray-300 border border-gray-300 disabled:opacity-40" onclick="window.moverGastoCima(${realIndex})" ${realIndex === 0 ? 'disabled' : ''} title="Mover para cima"><i data-lucide="arrow-up"></i></button>
+          <button class="bg-gray-200 text-gray-700 px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-gray-300 border border-gray-300 disabled:opacity-40" onclick="window.moverGastoBaixo(${realIndex})" ${realIndex === gastos.length - 1 ? 'disabled' : ''} title="Mover para baixo"><i data-lucide="arrow-down"></i></button>
+          <button class="bg-blue-500 text-white px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-blue-600 border border-blue-600 flex items-center gap-1" onclick="window.editarGasto(${realIndex})"><i data-lucide="pencil"></i> <span class="hidden sm:inline">Editar</span></button>
+          <button class="bg-red-500 text-white px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-red-600 border border-red-600 flex items-center gap-1" onclick="window.removerGasto(${realIndex})"><i data-lucide="trash-2"></i> <span class="hidden sm:inline">Excluir</span></button>
         </div>
         <div class="xs:hidden relative">
           <button class="bg-gray-200 text-gray-700 px-2 py-1 rounded border border-gray-300 flex items-center gap-1" onclick="window.toggleDropdown('${dropdownId}')">
             <i data-lucide="more-vertical"></i>
           </button>
           <div id="${dropdownId}" class="hidden absolute right-0 top-8 z-10 bg-white border border-gray-200 rounded shadow-md min-w-[140px]">
-            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 disabled:opacity-40" onclick="window.moverGastoCima(${index})" ${index === 0 ? 'disabled' : ''}><i data-lucide="arrow-up"></i> Mover para cima</button>
-            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 disabled:opacity-40" onclick="window.moverGastoBaixo(${index})" ${index === gastos.length - 1 ? 'disabled' : ''}><i data-lucide="arrow-down"></i> Mover para baixo</button>
-            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-blue-50 text-blue-700" onclick="window.editarGasto(${index})"><i data-lucide="pencil"></i> Editar</button>
-            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-red-50 text-red-700" onclick="window.removerGasto(${index})"><i data-lucide="trash-2"></i> Excluir</button>
+            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 disabled:opacity-40" onclick="window.moverGastoCima(${realIndex})" ${realIndex === 0 ? 'disabled' : ''}><i data-lucide="arrow-up"></i> Mover para cima</button>
+            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 disabled:opacity-40" onclick="window.moverGastoBaixo(${realIndex})" ${realIndex === gastos.length - 1 ? 'disabled' : ''}><i data-lucide="arrow-down"></i> Mover para baixo</button>
+            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-blue-50 text-blue-700" onclick="window.editarGasto(${realIndex})"><i data-lucide="pencil"></i> Editar</button>
+            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-red-50 text-red-700" onclick="window.removerGasto(${realIndex})"><i data-lucide="trash-2"></i> Excluir</button>
           </div>
         </div>
       `
       listaGastosEl.appendChild(gastoEl)
       // Adiciona separador visual entre itens, exceto o último
-      if (index < gastos.length - 1) {
+      if (index < gastosFiltrados.length - 1) {
         const divider = document.createElement('div')
         divider.className = 'h-px bg-gray-200 my-2 w-full'
         listaGastosEl.appendChild(divider)
@@ -180,6 +237,7 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     localStorage.setItem('gastos', JSON.stringify(gastos))
     createIcons({ icons }) // Atualiza ícones após renderização
+    renderizarGraficoGastos()
   }
 
   // Dropdown handler para mobile
@@ -361,10 +419,81 @@ document.addEventListener('DOMContentLoaded', () => {
     atualizarResumo()
   }
 
+  // Função para renderizar o gráfico de gastos
+  const renderizarGraficoGastos = () => {
+    Chart.register(...registerables)
+
+    const graficoContainerId = 'grafico-gastos-container'
+    let container = document.getElementById(graficoContainerId)
+    if (!container) {
+      container = document.createElement('div')
+      container.id = graficoContainerId
+      container.className = 'w-full max-w-md mx-auto my-6'
+      // Insere antes do resumo
+      const resumoSection = document.getElementById('resumo')
+      resumoSection?.parentElement?.insertBefore(container, resumoSection)
+    }
+    // Limpa o container e cria sempre um novo canvas
+    container.innerHTML = ''
+    const canvas = document.createElement('canvas')
+    canvas.id = 'grafico-gastos-canvas'
+    container.appendChild(canvas)
+
+    // Destroi instância anterior se existir
+    if (chartInstance) {
+      chartInstance.destroy()
+    }
+
+    // Dados do gráfico
+    const labels = gastos.map((g) => g.nome)
+    const data = gastos.map((g) => g.valor)
+    const backgroundColors = [
+      '#a78bfa',
+      '#f472b6',
+      '#60a5fa',
+      '#fbbf24',
+      '#34d399',
+      '#f87171',
+      '#facc15',
+      '#38bdf8',
+      '#c084fc',
+      '#fb7185'
+    ]
+    chartInstance = new Chart(canvas, {
+      type: 'pie',
+      data: {
+        labels,
+        datasets: [
+          {
+            data,
+            backgroundColor: labels.map(
+              (_, i) => backgroundColors[i % backgroundColors.length]
+            ),
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        plugins: {
+          legend: {
+            display: true,
+            position: 'bottom'
+          },
+          title: {
+            display: true,
+            text: 'Comparativo de Gastos'
+          }
+        },
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    })
+  }
+
   ;(window as any).removerGasto = (index: number): void => {
     const modal = abrirModal(`
       <h3>Confirmar Exclusão</h3>
-      <p>Tem certeza que deseja excluir o gasto "<span class="font-bold">${gastos[index].descricao}</span>"?</p>
+      <p>Tem certeza que deseja excluir o gasto "<span class="font-bold">${gastos[index].nome}</span>"?</p>
       <div class="mt-4 flex justify-center space-x-4">
         <button id="confirmar-exclusao" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Sim</button>
         <button class="fechar-modal bg-gray-500 text-white px-4 py-2 rounded hover:bg-gray-600">Não</button>
@@ -491,8 +620,9 @@ document.addEventListener('DOMContentLoaded', () => {
   })
 
   atualizarSaldo()
-  renderizarGastos()
   atualizarResumo()
   atualizarBotaoSaldo()
   atualizarSecaoGastos()
+  renderizarGastos()
+  renderizarGraficoGastos()
 })

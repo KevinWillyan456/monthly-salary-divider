@@ -65,7 +65,7 @@
           Gastos
         </h2>
 
-        <div id="lista-gastos" class="space-y-2"></div>
+        <div id="lista-gastos"></div>
 
         <div class="flex flex-col gap-2 sm:flex-row">
           <input
@@ -95,6 +95,18 @@
           <i data-lucide="plus"></i>
           Adicionar Gasto
         </button>
+      </section>
+
+      <!-- Adicionei logo antes da seção de resumo -->
+      <section id="grafico-gastos" class="rounded-lg bg-white p-4 shadow">
+        <h2 class="flex items-center gap-2 text-xl font-semibold">
+          <i data-lucide="pie-chart"></i>
+          Comparativo de Gastos
+        </h2>
+        <div
+          id="grafico-gastos-container"
+          class="mx-auto h-96 w-full max-w-3xl"
+        ></div>
       </section>
 
       <section id="resumo" class="rounded-lg bg-white p-4 shadow">
