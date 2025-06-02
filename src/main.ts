@@ -1,4 +1,5 @@
 import { Chart, registerables } from 'chart.js'
+import jsPDF from 'jspdf'
 import { createIcons, icons } from 'lucide'
 
 createIcons({ icons })
@@ -31,6 +32,9 @@ document.addEventListener('DOMContentLoaded', () => {
   ) as HTMLDivElement
   const resetBtn = document.getElementById('resetar-tudo') as HTMLButtonElement
   const anoAtualEl = document.getElementById('ano-atual') as HTMLSpanElement
+  const exportarPdfBtn = document.getElementById(
+    'exportar-pdf'
+  ) as HTMLButtonElement
 
   // Variáveis globais
   let saldo: number = parseFloat(localStorage.getItem('saldo') || '0')
@@ -507,6 +511,151 @@ document.addEventListener('DOMContentLoaded', () => {
     })
   }
 
+  // Função para exportar PDF estilizado
+  const exportarParaPDF = () => {
+    const doc = new jsPDF('p', 'mm', 'a4')
+    const pageWidth = doc.internal.pageSize.getWidth()
+    let y = 20
+
+    // Cabeçalho estilizado
+    doc.setFillColor(124, 58, 237) // Roxo
+    doc.rect(0, 0, pageWidth, 28, 'F')
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(22)
+    doc.setTextColor(255, 255, 255)
+    doc.text('Resumo Financeiro', pageWidth / 2, 18, { align: 'center' })
+
+    // Subtítulo
+    doc.setFontSize(12)
+    doc.setTextColor(80, 80, 80)
+    y = 36
+    doc.text(
+      `Gerado em: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`,
+      pageWidth / 2,
+      y,
+      { align: 'center' }
+    )
+
+    // Divisor
+    y += 6
+    doc.setDrawColor(167, 139, 250)
+    doc.setLineWidth(1)
+    doc.line(20, y, pageWidth - 20, y)
+    y += 8
+
+    // Totais
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(14)
+    doc.setTextColor(55, 65, 81)
+    doc.text(`Saldo inicial:`, 20, y)
+    doc.setTextColor(37, 99, 235)
+    doc.text(`R$ ${saldoInicial.toFixed(2)}`, 60, y)
+    y += 8
+    doc.setTextColor(55, 65, 81)
+    doc.text(`Total disponível:`, 20, y)
+    doc.setTextColor(16, 185, 129)
+    doc.text(`R$ ${saldo.toFixed(2)}`, 60, y)
+    y += 8
+    doc.setTextColor(55, 65, 81)
+    doc.text(`Total gasto:`, 20, y)
+    const totalGastos = gastos.reduce((acc, gasto) => acc + gasto.valor, 0)
+    doc.setTextColor(239, 68, 68)
+    doc.text(`R$ ${totalGastos.toFixed(2)}`, 60, y)
+    y += 12
+
+    // Divisor
+    doc.setDrawColor(226, 232, 240)
+    doc.setLineWidth(0.5)
+    doc.line(20, y, pageWidth - 20, y)
+    y += 8
+
+    // Tabela de Gastos
+    doc.setFont('helvetica', 'bold')
+    doc.setFontSize(13)
+    doc.setTextColor(124, 58, 237)
+    doc.text('Gastos', 20, y)
+    y += 7
+
+    if (gastos.length === 0) {
+      doc.setFont('helvetica', 'normal')
+      doc.setFontSize(11)
+      doc.setTextColor(120, 120, 120)
+      doc.text('Nenhum gasto registrado.', 20, y)
+      y += 8
+    } else {
+      // Cabeçalho da tabela
+      doc.setFillColor(243, 244, 246)
+      doc.roundedRect(20, y - 3, pageWidth - 40, 10, 2, 2, 'F')
+      doc.setFontSize(11)
+      doc.setTextColor(55, 65, 81)
+      doc.text('Nome', 22, y + 4)
+      doc.text('Descrição', 70, y + 4)
+      doc.text('Valor', pageWidth - 55, y + 4)
+      doc.text('Pago', pageWidth - 32, y + 4)
+      y += 11
+      // Linhas da tabela
+      gastos.forEach((gasto, i) => {
+        if (y > 270) {
+          doc.addPage()
+          y = 20
+        }
+        // Fundo alternado
+        if (i % 2 === 0) {
+          doc.setFillColor(249, 250, 251)
+          doc.rect(20, y - 3, pageWidth - 40, 9, 'F')
+        }
+        doc.setFont('helvetica', gasto.pago ? 'italic' : 'normal')
+        doc.setFontSize(10)
+        doc.setTextColor(55, 65, 81)
+        doc.text(
+          gasto.nome?.substring(0, 25).replace(/\n/g, ' ').replace(/ +/g, ' ') +
+            (gasto.nome?.length > 25 ? '...' : ''),
+          22,
+          y + 3
+        )
+        doc.setTextColor(107, 114, 128)
+        doc.text(
+          gasto.descricao
+            ?.substring(0, 50)
+            .replace(/\n/g, ' ')
+            .replace(/ +/g, ' ') +
+            (gasto.descricao?.length > 50 ? '...' : '') || '-',
+          70,
+          y + 3
+        )
+        doc.setTextColor(16, 185, 129)
+        doc.text(`R$ ${gasto.valor.toFixed(2)}`, pageWidth - 55, y + 3)
+        doc.setTextColor(
+          gasto.pago ? 34 : 239,
+          gasto.pago ? 197 : 68,
+          gasto.pago ? 94 : 68
+        )
+        doc.text(gasto.pago ? 'Sim' : 'Não', pageWidth - 30, y + 3)
+        y += 9
+      })
+    }
+
+    // Rodapé
+    y = 287
+    doc.setDrawColor(167, 139, 250)
+    doc.setLineWidth(0.7)
+    doc.line(0, y, pageWidth, y)
+    doc.setFontSize(10)
+    doc.setTextColor(124, 58, 237)
+    doc.text(
+      `© ${new Date().getFullYear()} Divisor de Salário Mensal`,
+      pageWidth / 2,
+      y + 7,
+      { align: 'center' }
+    )
+
+    doc.save(
+      `resumo-financeiro-${new Date()
+        .toLocaleDateString('pt-BR')
+        .replace(/\//g, '-')}.pdf`
+    )
+  }
+
   ;(window as any).removerGasto = (index: number): void => {
     const modal = abrirModal(`
       <h3>Confirmar Exclusão</h3>
@@ -649,4 +798,8 @@ document.addEventListener('DOMContentLoaded', () => {
   atualizarSecaoGastos()
   renderizarGastos()
   renderizarGraficoGastos()
+
+  if (exportarPdfBtn) {
+    exportarPdfBtn.addEventListener('click', exportarParaPDF)
+  }
 })
