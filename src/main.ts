@@ -34,9 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Variáveis globais
   let saldo: number = parseFloat(localStorage.getItem('saldo') || '0')
-  let gastos: { nome: string; descricao: string; valor: number }[] = JSON.parse(
-    localStorage.getItem('gastos') || '[]'
-  )
+  let gastos: {
+    nome: string
+    descricao: string
+    valor: number
+    pago?: boolean
+  }[] = JSON.parse(localStorage.getItem('gastos') || '[]')
   let saldoInicial: number = parseFloat(
     localStorage.getItem('saldoInicial') || saldo.toString() || '0'
   )
@@ -205,15 +208,19 @@ document.addEventListener('DOMContentLoaded', () => {
       const dropdownId = `dropdown-gasto-${realIndex}`
       gastoEl.innerHTML = `
         <div class="flex flex-col min-w-0 flex-1">
-          <span class="font-bold text-gray-900 truncate">${gasto.nome}</span>
-          ${gasto.descricao ? `<span class="text-gray-500 text-sm truncate">${gasto.descricao}</span>` : ''}
-          <span class="text-green-700 font-bold text-lg mt-1">R$ ${gasto.valor.toFixed(2)}</span>
+          <span class="font-bold text-gray-900 truncate ${gasto.pago ? 'line-through text-green-700' : ''}">${gasto.nome}</span>
+          ${gasto.descricao ? `<span class="text-gray-500 text-sm truncate ${gasto.pago ? 'line-through' : ''}">${gasto.descricao}</span>` : ''}
+          <span class="text-green-700 font-bold text-lg mt-1 ${gasto.pago ? 'line-through' : ''}">R$ ${gasto.valor.toFixed(2)}</span>
         </div>
         <div class="hidden xs:flex flex-row flex-wrap gap-1 sm:gap-2">
           <button class="bg-gray-200 text-gray-700 px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-gray-300 border border-gray-300 disabled:opacity-40" onclick="window.moverGastoCima(${realIndex})" ${realIndex === 0 ? 'disabled' : ''} title="Mover para cima"><i data-lucide="arrow-up"></i></button>
           <button class="bg-gray-200 text-gray-700 px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-gray-300 border border-gray-300 disabled:opacity-40" onclick="window.moverGastoBaixo(${realIndex})" ${realIndex === gastos.length - 1 ? 'disabled' : ''} title="Mover para baixo"><i data-lucide="arrow-down"></i></button>
           <button class="bg-blue-500 text-white px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-blue-600 border border-blue-600 flex items-center gap-1" onclick="window.editarGasto(${realIndex})"><i data-lucide="pencil"></i> <span class="hidden sm:inline">Editar</span></button>
           <button class="bg-red-500 text-white px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded hover:bg-red-600 border border-red-600 flex items-center gap-1" onclick="window.removerGasto(${realIndex})"><i data-lucide="trash-2"></i> <span class="hidden sm:inline">Excluir</span></button>
+          <button class="bg-green-100 text-green-700 px-1.5 py-1 text-xs sm:px-2 sm:py-1 sm:text-base rounded border border-green-400 flex items-center gap-1 hover:bg-green-200" onclick="window.togglePago(${realIndex})" title="Marcar como pago">
+            <i data-lucide="${gasto.pago ? 'check-square' : 'square'}"></i>
+            <span class="hidden sm:inline">${gasto.pago ? 'Pago' : 'Marcar Pago'}</span>
+          </button>
         </div>
         <div class="xs:hidden relative">
           <button class="bg-gray-200 text-gray-700 px-2 py-1 rounded border border-gray-300 flex items-center gap-1" onclick="window.toggleDropdown('${dropdownId}')">
@@ -224,6 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-gray-100 disabled:opacity-40" onclick="window.moverGastoBaixo(${realIndex})" ${realIndex === gastos.length - 1 ? 'disabled' : ''}><i data-lucide="arrow-down"></i> Mover para baixo</button>
             <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-blue-50 text-blue-700" onclick="window.editarGasto(${realIndex})"><i data-lucide="pencil"></i> Editar</button>
             <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-red-50 text-red-700" onclick="window.removerGasto(${realIndex})"><i data-lucide="trash-2"></i> Excluir</button>
+            <button class="w-full flex items-center gap-2 px-3 py-2 text-left hover:bg-green-50 text-green-700" onclick="window.togglePago(${realIndex})"><i data-lucide="${gasto.pago ? 'check-square' : 'square'}"></i> ${gasto.pago ? 'Pago' : 'Marcar Pago'}</button>
           </div>
         </div>
       `
@@ -608,6 +616,13 @@ document.addEventListener('DOMContentLoaded', () => {
       renderizarGastos()
       atualizarResumo()
     }
+  }
+
+  // Função para marcar/desmarcar gasto como pago
+  ;(window as any).togglePago = (index: number): void => {
+    gastos[index].pago = !gastos[index].pago
+    localStorage.setItem('gastos', JSON.stringify(gastos))
+    renderizarGastos()
   }
 
   // Inicialização
